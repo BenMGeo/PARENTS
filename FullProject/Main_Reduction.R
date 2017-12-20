@@ -1,7 +1,7 @@
 SignalReduction=function(Input,Patterns,...){
   
-  # Input: raster tack of original Data
-  # Patterns: list of patterns to be extracted, best named
+  # Input: raster stack of original data
+  # Patterns: list of raster patterns to be extracted, best named
   # ...: prameters, see below
   
   # RedInput: Input reduced by Patterns
@@ -76,7 +76,7 @@ SignalReduction=function(Input,Patterns,...){
     }
   }
   
-  ##### used functions #####
+  ##### used sub functions #####
   
   loc.myDDS=function(X,LB,UB,FUN,...,pars=list(R=0.2,MaxEval=1000,len=10,pos=1,printint=100,plotter=F)){
     
@@ -313,7 +313,7 @@ SignalReduction=function(Input,Patterns,...){
   loc.ProjCheck=function(R1,R2){
     
     # R1: raster to be changed
-    # R2: raster to be checked
+    # R2: raster to be checked for
     
     if (!(projection(R1)==projection(R2))){
       R1=projectRaster(R1,R2)
@@ -363,7 +363,7 @@ SignalReduction=function(Input,Patterns,...){
       par(mfrow=c(1,1))
       plot(0,cInv.Opt,
            main=paste("current optimization process for pattern",P),type="p",log="y",
-           ylim=c(minPlot,cInv.Opt),xlim=c(0,MaxEval*numFrac),
+           ylim=c(minPlot,cInv.Opt),xlim=c(0,MaxEval*numFrac),xlab=("steps"),
            ylab="fopt",col="black",pch=19,cex=2)
     }
     
@@ -375,18 +375,21 @@ SignalReduction=function(Input,Patterns,...){
     
     # Step 2d: calculation of rotated results
     RotMat=loc.RotTransMat(ALPHA.Opt[[1]]) #[1:tridi]?
-    fullRotAngleU1=acos(RotMat[1,1]/sqrt(sum(RotMat[,1]^2)))*180/pi
+    fullRotAngles=list()
+    for (i in 1:ncol(RotMat)){
+      fullRotAngles[[paste("angle_to_",i,sep="")]]=abs(acos(RotMat[i,i]/sqrt(sum(RotMat[,i]^2)))*180/pi)
+    }
     PCA.c.rot=as.data.frame(as.matrix(na.omit(as.data.frame(stack(Input,Patterns[[P]])))[,-nlayers(Input)+1])%*%I.PCA$full$rotation%*%RotMat)
     #rotPCs=PCA.c.rot
     PCA.c.rot=loc.DF2raster(PCA.c.rot,mean(stack(I.PCA$PCA,Patterns[[P]])))
     names(PCA.c.rot)=paste(P,"PC",1:nlayers(PCA.c.rot),sep=".")
     
-    # Step 2e: check data for which orientation is best
+    # Step 2e: check data for which orientation is best, while being scaled
     Pmod1<-Pmod2<-PCA.c.rot[[1]]
     Pmod1[]=loc.normDF(t(t(Pmod1[])))[,1]*diff(range(Patterns[[P]][],na.rm=T))+min(Patterns[[P]][],na.rm=T)
     Pmod2[]=-(loc.normDF(t(t(Pmod2[])))[,1]-1)*diff(range(Patterns[[P]][],na.rm=T))+min(Patterns[[P]][],na.rm=T)
     
-    choose=abs(cor(na.omit(as.data.frame(stack(Patterns[[P]],Pmod1,Pmod2)))))
+    choose=cor(na.omit(as.data.frame(stack(Patterns[[P]],Pmod1,Pmod2))))
     choose.P=which.max(choose[1,2:3])
     
     if(choose.P[1]==1){
@@ -404,7 +407,7 @@ SignalReduction=function(Input,Patterns,...){
     
     RotOpt[[P]]=loc.RotOpt
     Corrs[[P]]=choose[1,1+choose.P[1]]
-    Angles[[P]]=fullRotAngleU1
+    Angles[[P]]=fullRotAngles
     
     # Step 2f: calculate reduced Input for next step
     
