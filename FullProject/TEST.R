@@ -1,7 +1,6 @@
 source('R:/iP.PCArotator/FullProject/Main_Reduction.R')
 require(plyr)
 require(raster)
-require(rgdal)
 require(fBasics)
 
 #Test Main_Reduction.R
