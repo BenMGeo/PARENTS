@@ -1,4 +1,4 @@
-source('R:/iP.PCArotator/FullProject/Main_Reduction.R')
+source('D:/3_GIT/PARENTS/FullProject/Main_Reduction.R')
 require(plyr)
 require(raster)
 require(fBasics)
